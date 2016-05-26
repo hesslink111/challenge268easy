@@ -1,0 +1,215 @@
+package io.deltawave.cardgame.blackjack;
+
+import io.deltawave.cardgame.Card;
+import io.deltawave.cardgame.Deck;
+import io.deltawave.server.ClientsList;
+import io.deltawave.server.ConnectedClient;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+/**
+ * Created by will on 5/26/16.
+ */
+public class GameThread extends Thread {
+
+    private ClientsList cList;
+    private Deck deck;
+
+    private ArrayList<Player> playingPlayers;
+    private ArrayList<Player> notDone;
+
+    //State
+    private boolean playing;
+    private boolean waiting;
+    private Player waitingForPlayer;
+    private ArrayList<String> waitingForActions;
+    private String actionChosen;
+    private final Object waitObject = new Object();
+
+    public GameThread(Collection<Player> players) {
+        this.cList = ClientsList.getInstance();
+        playingPlayers = new ArrayList<>(players);
+        notDone = new ArrayList<>(players);
+
+        deck = new Deck();
+
+        //Default state
+        playing = true;
+        waiting = false;
+        waitingForPlayer = null;
+        waitingForActions = new ArrayList<>();
+        actionChosen = "";
+    }
+
+    public boolean isPlaying() {
+        return playing;
+    }
+
+    public void removePlayer(Player player) {
+        deck.addAll(player.getCards());
+        notDone.remove(player);
+        playingPlayers.remove(player);
+
+        //Check if they are being waited on
+        synchronized (waitObject) {
+            if (waiting && waitingForPlayer == player) {
+                //Uh oh
+                waiting = false;
+                waitObject.notify();
+            }
+        }
+
+    }
+
+    @Override
+    public void run() {
+        //Start the game
+        System.out.println("Starting game");
+        System.out.println("Number of players: " + playingPlayers.size());
+
+        //Reset and shuffle the deck
+        deck.resetDeck();
+
+        //Remove all their cards
+        playingPlayers.stream().forEach(p -> p.resetHand());
+
+        System.out.println("Dealing");
+        //Deal two to each player
+        Stream.iterate(1, i -> i+1)
+                .limit(2)
+                .forEach(i -> playingPlayers.stream()
+                        .forEachOrdered(this::giveCard));
+
+        //Remove all the guys who have reached the limit
+        notDone.removeAll(playingPlayers.stream().filter(p -> p.getMinHandValue() >= 21).collect(Collectors.toList()));
+
+        //Keep dealing until all are done
+        while(!notDone.isEmpty()) {
+            Iterator<Player> notDonePlayersIterator = notDone.iterator();
+            while(notDonePlayersIterator.hasNext()) {
+
+                //Deal to this player
+                Player p = notDonePlayersIterator.next();
+
+                //Take or pass
+                if(offerCard(p)) {
+                    System.out.println("Player took card");
+                    //Check if they have 21
+                    if (p.getMinHandValue() >= 21) {
+                        notDonePlayersIterator.remove();
+                    }
+                } else {
+                    System.out.println("Player did not take card");
+                    notDonePlayersIterator.remove();
+                }
+
+            }
+        }
+
+        //Count points and such
+
+        //Find all the guys that busted
+        playingPlayers.stream()
+                .filter(p -> p.getMinHandValue() > 21)
+                .forEachOrdered(p -> cList.sendToAll(p.getName() + " has busted: " + p.getMinHandValue()));
+
+        //Find everyone else's score
+        playingPlayers.stream()
+                .filter(p -> p.getMinHandValue() <= 21)
+                .forEachOrdered(p -> cList.sendToAll(p.getName() + " has " + p.getBestHandValue()));
+
+        //Finally, reset the game state
+        playing = false;
+    }
+
+
+    //True if taken, false otherwise
+    private boolean offerCard(Player p) {
+
+        //Offer card (take or pass)
+        p.sendMessage("TAKE OR PASS");
+
+        //Wait until they take the card
+        waitForPlayerAction(p, "TAKE", "PASS");
+
+        if(actionChosen.equals("TAKE")) {
+
+            giveCard(p);
+
+            return true;
+
+        } else if(actionChosen.equals("PASS")) {
+            //Don't give card
+
+            cList.sendToAll("Player " + p.getName() + " passes");
+
+            return false;
+        }
+
+        return false;
+
+    }
+
+    public void giveCard(Player p) {
+        //Get card
+        Card c = deck.getCard();
+
+        //Give card
+        p.giveCard(c);
+
+        //Tell everyone
+        cList.sendToAll("Player " + p.getName() + " takes a " + c.getValue() + " of " + c.getSuite());
+    }
+
+    public void waitForPlayerAction(Player p, String...actions) {
+        //Set to wait
+        waiting = true;
+        waitingForPlayer = p;
+
+        //Add all actions
+        for(String action: actions) {
+            waitingForActions.add(action);
+        }
+
+        //Wait until the action is taken
+        synchronized(waitObject) {
+            while (waiting) {
+                try {
+                    waitObject.wait();
+                } catch (InterruptedException e) {
+                    System.out.println("GameManager wait state interrupted");
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        //Clear the waiting-for actions
+        waitingForActions.clear();
+
+        //Clear the waiting-for player
+        waitingForPlayer = null;
+    }
+
+    public void checkMessageReceivedFromWaitingPlayer(Player player, String messageType, String messageBody) {
+        synchronized(waitObject) {
+            if (waitingForPlayer == player) {
+
+                //Check action
+                if (waitingForActions.contains(messageType)) {
+
+                    //Set action chosen
+                    actionChosen = messageType;
+
+                    //Wake game thread
+                    waiting = false;
+                    waitObject.notify();
+                }
+            }
+        }
+    }
+
+}
