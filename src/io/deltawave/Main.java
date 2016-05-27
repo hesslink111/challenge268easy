@@ -18,7 +18,7 @@ public class Main {
         ConnectionAccepter ca = new ConnectionAccepter();
         ca.start();
 
-        /* Avoiding this for now
+        //No longer avoiding this
         //Send heartbeat to all clients every second
         Timer heartbeatTimer = new Timer();
         heartbeatTimer.schedule(new TimerTask() {
@@ -28,7 +28,6 @@ public class Main {
                 heartbeat.sendHeartbeat();
             }
         }, 0, 10000);
-        */
 
 
     }

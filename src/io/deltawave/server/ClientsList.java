@@ -60,6 +60,7 @@ public class ClientsList implements MessageListener {
         client.disconnect();
         connectedClients.remove(client);
         connectionChangeListeners.stream().forEach(ccl -> ccl.onDisconnect(client));
+        sendToAll(client.getUsername() + " has disconnected.");
     }
 
     public void removeClients(List<ConnectedClient> clientList) {

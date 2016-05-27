@@ -4,9 +4,7 @@ import io.deltawave.cardgame.Card;
 import io.deltawave.cardgame.Deck;
 import io.deltawave.server.ClientsList;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -19,7 +17,8 @@ public class GameThread extends Thread {
     private Deck deck;
 
     private ArrayList<Player> playingPlayers;
-    private ArrayList<Player> notDone;
+    private ArrayDeque<Player> notDone;
+    private ArrayList<Player> nextTurn;
 
     //State
     private boolean playing;
@@ -32,7 +31,8 @@ public class GameThread extends Thread {
     public GameThread(Collection<Player> players) {
         this.cList = ClientsList.getInstance();
         playingPlayers = new ArrayList<>(players);
-        notDone = new ArrayList<>(players);
+        notDone = new ArrayDeque<>(players);
+        nextTurn = new ArrayList<>();
 
         deck = new Deck();
 
@@ -51,6 +51,7 @@ public class GameThread extends Thread {
     public void removePlayer(Player player) {
         deck.addAll(player.getCards());
         notDone.remove(player);
+        nextTurn.remove(player);
         playingPlayers.remove(player);
 
         //Check if they are being waited on
@@ -88,25 +89,29 @@ public class GameThread extends Thread {
 
         //Keep dealing until all are done
         while(!notDone.isEmpty()) {
-            Iterator<Player> notDonePlayersIterator = notDone.iterator();
-            while(notDonePlayersIterator.hasNext()) {
+            nextTurn.addAll(notDone);
+            while(!notDone.isEmpty()) {
 
-                //Deal to this player
-                Player p = notDonePlayersIterator.next();
+                //It is this player's turn now
+                Player p = notDone.removeFirst();
 
                 //Take or pass
                 if(offerCard(p)) {
                     System.out.println("Player took card");
                     //Check if they have 21
                     if (p.getMinHandValue() >= 21) {
-                        notDonePlayersIterator.remove();
+                        //You don't get to play next turn
+                        nextTurn.remove(p);
                     }
                 } else {
                     System.out.println("Player did not take card");
-                    notDonePlayersIterator.remove();
+                    //You can't play next turn either
+                    nextTurn.remove(p);
                 }
 
             }
+            notDone.addAll(nextTurn);
+            nextTurn.clear();
         }
 
         //Count points and such
@@ -114,12 +119,12 @@ public class GameThread extends Thread {
         //Find all the guys that busted
         playingPlayers.stream()
                 .filter(p -> p.getMinHandValue() > 21)
-                .forEachOrdered(p -> cList.sendToAll(p.getName() + " has busted: " + p.getMinHandValue()));
+                .forEachOrdered(p -> cList.sendToAll(p.getUsername() + " has busted: " + p.getMinHandValue()));
 
         //Find everyone else's score
         playingPlayers.stream()
                 .filter(p -> p.getMinHandValue() <= 21)
-                .forEachOrdered(p -> cList.sendToAll(p.getName() + " has " + p.getBestHandValue()));
+                .forEachOrdered(p -> cList.sendToAll(p.getUsername() + " has " + p.getBestHandValue()));
 
         //Finally, reset the game state
         playing = false;
@@ -138,19 +143,16 @@ public class GameThread extends Thread {
         if(actionChosen.equals("TAKE")) {
 
             giveCard(p);
-
             return true;
 
         } else if(actionChosen.equals("PASS")) {
             //Don't give card
 
-            cList.sendToAll("Player " + p.getName() + " passes");
-
+            cList.sendToAll("Player " + p.getUsername() + " passes");
             return false;
         }
 
         return false;
-
     }
 
     public void giveCard(Player p) {
@@ -161,7 +163,7 @@ public class GameThread extends Thread {
         p.giveCard(c);
 
         //Tell everyone
-        cList.sendToAll("Player " + p.getName() + " takes a " + c.getValue() + " of " + c.getSuite());
+        cList.sendToAll("Player " + p.getUsername() + " takes a " + c.getValue() + " of " + c.getSuite());
     }
 
     public void waitForPlayerAction(Player p, String...actions) {

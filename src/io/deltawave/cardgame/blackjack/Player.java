@@ -19,8 +19,8 @@ public class Player {
         hand = new ArrayList<>();
     }
 
-    public String getName() {
-        return client.getName();
+    public String getUsername() {
+        return client.getUsername();
     }
 
     public void giveCard(Card c) {
