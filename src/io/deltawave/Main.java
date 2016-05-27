@@ -19,7 +19,7 @@ public class Main {
         ConnectionAccepter ca = new ConnectionAccepter();
         ca.start();
 
-        //No longer avoiding this
+        /* //No longer avoiding this
         //Send heartbeat to all clients every second
         Timer heartbeatTimer = new Timer();
         heartbeatTimer.schedule(new TimerTask() {
@@ -29,6 +29,7 @@ public class Main {
                 heartbeat.sendHeartbeat();
             }
         }, 0, 10000);
+        */
 
         //Broadcast existence
         BroadcastThread bct = new BroadcastThread();

@@ -2,6 +2,7 @@ package io.deltawave.server;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 /**
@@ -96,6 +97,20 @@ public class ClientsList implements MessageListener {
             }
         } else if(messageType.equals("LISTUSERS")) {
             connectedClients.stream().forEach(c -> client.send(c.getUsername()));
+        } else if(messageType.equals("SENDMESSAGE") || messageType.equals("SENDMSG")) {
+            String[] bodyParts = messageBody.split(" ");
+            if(bodyParts.length > 1) {
+                String recipient = bodyParts[0];
+                String message = messageBody.substring(recipient.length()+1, messageBody.length());
+                //find recipient
+                Optional<ConnectedClient> recipientClient = connectedClients.stream().filter(c -> c.getUsername().equals(recipient)).findAny();
+                if(recipientClient.isPresent()) {
+                    recipientClient.get().send(client.getUsername() + ": " + message);
+                    client.send("Message sent");
+                } else {
+                    client.send("Message could not be sent: no recipient by that name");
+                }
+            }
         }
     }
 
