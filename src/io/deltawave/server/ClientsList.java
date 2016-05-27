@@ -85,7 +85,7 @@ public class ClientsList implements MessageListener {
     public void onMessageReceived(ConnectedClient client, String messageType, String messageBody) {
 
         //Check if they are trying to change their name
-        if(messageType.equals("USERNAME")) {
+        if(messageType.equals("SETUSERNAME")) {
             //Set username
             if(isNameFree(messageBody)) {
                 String oldName = client.getUsername();
@@ -93,7 +93,7 @@ public class ClientsList implements MessageListener {
                 client.send("You are " + messageBody);
                 sendToAll(oldName + " is now known as " + messageBody);
             } else {
-                client.send("Name already taken");
+                client.send("Name not available");
             }
         } else if(messageType.equals("LISTUSERS")) {
             connectedClients.stream().forEach(c -> client.send(c.getUsername()));
@@ -105,17 +105,20 @@ public class ClientsList implements MessageListener {
                 //find recipient
                 Optional<ConnectedClient> recipientClient = connectedClients.stream().filter(c -> c.getUsername().equals(recipient)).findAny();
                 if(recipientClient.isPresent()) {
-                    recipientClient.get().send(client.getUsername() + ": " + message);
+                    recipientClient.get().send(client.getUsername() + " -> " + recipientClient.get().getUsername() + ": " + message);
                     client.send("Message sent");
                 } else {
                     client.send("Message could not be sent: no recipient by that name");
                 }
             }
+        } else if(messageType.equals("SENDALL")) {
+            connectedClients.stream().forEach(c -> c.send(client.getUsername() + " -> all: " + messageBody));
+            client.send("Message sent to all");
         }
     }
 
     private boolean isNameFree(String name) {
-        return name.length() > 0 && connectedClients.stream().noneMatch(c -> c.getUsername().equals(name));
+        return name.length() > 0 && name.matches("\\S+") && connectedClients.stream().noneMatch(c -> c.getUsername().equals(name));
     }
 
     private String getRandomName() {
