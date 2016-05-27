@@ -19,8 +19,8 @@ public class Main {
         ConnectionAccepter ca = new ConnectionAccepter();
         ca.start();
 
-        /* //No longer avoiding this
-        //Send heartbeat to all clients every second
+        //No longer avoiding this
+        //Send heartbeat to all clients every 4 seconds
         Timer heartbeatTimer = new Timer();
         heartbeatTimer.schedule(new TimerTask() {
             @Override
@@ -28,8 +28,7 @@ public class Main {
                 Heartbeat heartbeat = new Heartbeat();
                 heartbeat.sendHeartbeat();
             }
-        }, 0, 10000);
-        */
+        }, 0, 4000);
 
         //Broadcast existence
         BroadcastThread bct = new BroadcastThread();

@@ -16,11 +16,13 @@ public class BroadcastThread extends Thread {
 
         ClientsList cList = ClientsList.getInstance();
 
-        String message = "111 blackjack " + cList.getClientList().size();
+
 
         try {
             socket = new DatagramSocket();
             socket.setBroadcast(true);
+
+            String message = InetAddress.getLocalHost().getHostAddress() + " blackjack " + cList.getClientList().size();
             packet = new DatagramPacket(message.getBytes(), message.length(), InetAddress.getByName("255.255.255.255"), 2000);
 
             this.start();

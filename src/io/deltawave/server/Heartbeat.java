@@ -19,7 +19,7 @@ public class Heartbeat implements MessageListener {
     }
 
     public void sendHeartbeat() {
-        //After 1 second, check that everyone responded
+        //After 2 seconds, check that everyone responded
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
@@ -28,7 +28,7 @@ public class Heartbeat implements MessageListener {
                         .forEach(c -> System.out.println(c.getIdentity() + " disconnected: No heartbeat"));
                 cList.removeClients(notReceivedHeartbeatReply);
             }
-        }, 5000);
+        }, 2000);
 
         //Send the actual heartbeat
         cList.getClientList().parallelStream().forEach(this::sendHeartbeat);

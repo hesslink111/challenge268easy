@@ -4,22 +4,25 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.Socket;
+import java.net.*;
 
 /**
  * Created by will on 5/26/16.
  */
 public class Client {
 
-    Socket socket;
-    PrintWriter out;
-    BufferedReader in;
-    BufferedReader stdIn;
+    private String address;
+
+    private Socket socket;
+    private PrintWriter out;
+    private BufferedReader in;
+    private BufferedReader stdIn;
 
     public Client() throws IOException {
-        socket = new Socket("localhost", 2000);
-        out = new PrintWriter(socket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+        findServer();
+
+        connectToServer();
 
         Thread socketThread = new Thread() {
             @Override
@@ -46,8 +49,34 @@ public class Client {
 
     }
 
+    public void findServer() throws IOException {
+
+        //Wait for broadcast
+        System.out.println("Waiting for server broadcast...");
+        DatagramSocket dsocket = new DatagramSocket(2000, InetAddress.getByName("0.0.0.0"));
+        byte[] bytes = new byte[1024];
+        DatagramPacket dpacket = new DatagramPacket(bytes, 1024);
+        dsocket.receive(dpacket);
+
+        String[] messageParts = new String(bytes, 0, dpacket.getLength()).split(" ");
+        if(messageParts.length == 3) {
+            address = messageParts[0];
+            String game = messageParts[1];
+            String players = messageParts[2];
+
+            System.out.println("Address: " + address);
+            System.out.println("Game: " + game);
+            System.out.println("Players: " + players);
+        }
+    }
+
+    public void connectToServer() throws IOException {
+        socket = new Socket(InetAddress.getByName(address), 2000);
+        out = new PrintWriter(socket.getOutputStream(), true);
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    }
+
     private void receiveMessage(String message) {
-        System.out.println("Received from server: " + message);
         String[] messageParts = message.split(" ");
         if(messageParts.length > 0) {
             String messageType = messageParts[0];
@@ -57,15 +86,16 @@ public class Client {
     }
 
     public void processMessage(String messageType, String messageBody) {
-        switch(messageType) {
-            case "000":
-                sendHeartbeatReply();
-                break;
+        if(messageType.equals("000")) {
+            sendHeartbeatReply();
+        } else {
+            System.out.println(messageType + " " + messageBody);
         }
     }
 
     public void receiveCommand(String command) {
         //User typed something
+        out.println(command);
     }
 
     public void sendHeartbeatReply() {
@@ -73,7 +103,6 @@ public class Client {
     }
 
     public void send(String messageType, String messageBody) {
-        System.out.println("Sending to server: " + messageType + " " + messageBody);
         out.println(messageType + " " + messageBody);
     }
 
