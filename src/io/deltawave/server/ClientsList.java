@@ -94,6 +94,8 @@ public class ClientsList implements MessageListener {
             } else {
                 client.send("Name already taken");
             }
+        } else if(messageType.equals("LISTUSERS")) {
+            connectedClients.stream().forEach(c -> client.send(c.getUsername()));
         }
     }
 

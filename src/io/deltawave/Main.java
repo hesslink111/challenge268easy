@@ -1,6 +1,7 @@
 package io.deltawave;
 
 import io.deltawave.cardgame.blackjack.GameManager;
+import io.deltawave.server.BroadcastThread;
 import io.deltawave.server.ClientsList;
 import io.deltawave.server.Heartbeat;
 import io.deltawave.server.ConnectionAccepter;
@@ -28,6 +29,9 @@ public class Main {
                 heartbeat.sendHeartbeat();
             }
         }, 0, 10000);
+
+        //Broadcast existence
+        BroadcastThread bct = new BroadcastThread();
 
 
     }
