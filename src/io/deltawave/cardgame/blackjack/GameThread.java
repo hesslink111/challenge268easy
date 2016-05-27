@@ -77,12 +77,12 @@ public class GameThread extends Thread {
         //Remove all their cards
         playingPlayers.stream().forEach(p -> p.resetHand());
 
-        System.out.println("Dealing");
         //Deal two to each player
-        Stream.iterate(1, i -> i+1)
-                .limit(2)
-                .forEach(i -> playingPlayers.stream()
-                        .forEachOrdered(this::giveCard));
+        System.out.println("Dealing");
+        playingPlayers.stream()
+                .forEachOrdered(this::giveCardSecret);
+        playingPlayers.stream()
+                        .forEachOrdered(this::giveCard);
 
         //Remove all the guys who have reached the limit
         notDone.removeAll(playingPlayers.stream().filter(p -> p.getMinHandValue() >= 21).collect(Collectors.toList()));
@@ -164,6 +164,17 @@ public class GameThread extends Thread {
 
         //Tell everyone
         cList.sendToAll("Player " + p.getUsername() + " takes a " + c.getValue() + " of " + c.getSuite());
+    }
+
+    public void giveCardSecret(Player p) {
+        //Get card
+        Card c = deck.getCard();
+
+        //Give card
+        p.giveCard(c);
+
+        //Tell player
+        p.sendMessage("Secret: " + p.getUsername() + " takes " + c.getValue() + " of " + c.getSuite());
     }
 
     public void waitForPlayerAction(Player p, String...actions) {

@@ -18,21 +18,31 @@ public class Client {
     private BufferedReader in;
     private BufferedReader stdIn;
 
-    public Client() throws IOException {
-
-        findServer();
-
-        connectToServer();
+    private Client() {
 
         Thread socketThread = new Thread() {
             @Override
             public void run() {
+
                 try {
-                    while (true) {
-                        receiveMessage(in.readLine());
+
+                    while(true) {
+
+                        findServer();
+                        connectToServer();
+
+                        try {
+                            while (true) {
+                                receiveMessage(in.readLine());
+                            }
+                        } catch (Exception ex) {
+                            System.out.println("It appears we've disconnected!");
+                        }
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+
+                } catch (IOException ex) {
+                    System.out.println("Cannot open network connection");
+                    ex.printStackTrace();
                 }
             }
         };
@@ -44,12 +54,12 @@ public class Client {
                 receiveCommand(stdIn.readLine());
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Cannot read from keyboard");
         }
 
     }
 
-    public void findServer() throws IOException {
+    private void findServer() throws IOException {
 
         //Wait for broadcast
         System.out.println("Waiting for server broadcast...");
@@ -73,7 +83,7 @@ public class Client {
         dsocket.close();
     }
 
-    public void connectToServer() throws IOException {
+    private void connectToServer() throws IOException {
         socket = new Socket(InetAddress.getByName(address), 2000);
         out = new PrintWriter(socket.getOutputStream(), true);
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -88,7 +98,7 @@ public class Client {
         }
     }
 
-    public void processMessage(String messageType, String messageBody) {
+    private void processMessage(String messageType, String messageBody) {
         if(messageType.equals("000")) {
             sendHeartbeatReply();
         } else {
@@ -96,27 +106,22 @@ public class Client {
         }
     }
 
-    public void receiveCommand(String command) {
+    private void receiveCommand(String command) {
         //User typed something
         out.println(command);
     }
 
-    public void sendHeartbeatReply() {
+    private void sendHeartbeatReply() {
         send("001", "Heartbeat reply");
     }
 
-    public void send(String messageType, String messageBody) {
+    private void send(String messageType, String messageBody) {
         out.println(messageType + " " + messageBody);
     }
 
     public static void main(String[] args) {
-        try {
 
-            Client client = new Client();
+        Client client = new Client();
 
-        } catch (IOException e) {
-            System.out.println("There was an IO error.");
-            e.printStackTrace();
-        }
     }
 }

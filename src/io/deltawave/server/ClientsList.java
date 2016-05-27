@@ -29,7 +29,8 @@ public class ClientsList implements MessageListener {
             "Teller", "Yogi", "Onion", "Mudflap", "Hammer", "Bud", "Wallaber", "Acron",
             "Dominic", "Sierra", "Amherst", "Flapjack", "Thompson", "Mace", "Carpenter",
             "Laurence", "Mickey", "Bjorn", "Friendly", "Penny", "Barry", "Mulligan",
-            "Ivan", "Reginald", "Applesauce", "Bean", "Whitehouse", "Oppenheimer" };
+            "Ivan", "Reginald", "Applesauce", "Bean", "Whitehouse", "Oppenheimer",
+            "Breadcrumb", "Walnut", "Pandora", "Teakettle", "Housemouse", "Giraffe"};
 
     private ClientsList() {
         connectedClients = new ArrayList<>();
