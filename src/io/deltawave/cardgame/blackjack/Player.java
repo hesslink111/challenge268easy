@@ -2,21 +2,28 @@ package io.deltawave.cardgame.blackjack;
 
 import io.deltawave.cardgame.Card;
 import io.deltawave.server.ConnectedClient;
+import io.deltawave.server.MessageListener;
 
 import java.util.ArrayList;
 
 /**
  * Created by will on 5/25/16.
  */
-public class Player {
+public class Player implements MessageListener {
 
     private ConnectedClient client;
     private ArrayList<Card> hand;
 
+    private String mode;
+
     public Player(ConnectedClient client) {
         this.client = client;
+        client.addMessageListener(this);
 
         hand = new ArrayList<>();
+
+        //Default mode
+        mode = "PLAYER";
     }
 
     public String getUsername() {
@@ -66,4 +73,20 @@ public class Player {
         client.send(message);
     }
 
+    @Override
+    public void onMessageReceived(ConnectedClient client, String messageType, String messageBody) {
+        if(messageType.equals("SETMODE")) {
+            if(messageBody.equals("PLAYER")) {
+                mode = messageBody;
+                sendMessage("You're mode is set to PLAYER");
+            } else if(messageBody.equals("SPECTATOR")) {
+                mode = messageBody;
+                sendMessage("You're mode is set to SPECTATOR");
+            }
+        }
+    }
+
+    public String getMode() {
+        return mode;
+    }
 }

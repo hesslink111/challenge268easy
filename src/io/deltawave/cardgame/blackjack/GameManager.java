@@ -6,7 +6,10 @@ import io.deltawave.server.ConnectionChangeListener;
 import io.deltawave.server.MessageListener;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by will on 5/25/16.
@@ -64,7 +67,13 @@ public class GameManager implements ConnectionChangeListener, MessageListener {
 
             if (gameThread == null || !gameThread.isPlaying()) {
                 //Start the game in a new thread
-                gameThread = new GameThread(playerMap.values());
+                List<Player> playingPlayers = playerMap.values().stream().filter(p -> p.getMode().equals("PLAYER")).collect(Collectors.toList());
+                gameThread = new GameThread(playingPlayers);
+
+                //Inform players/spectators
+                playingPlayers.stream().forEach(p -> p.sendMessage("You are playing"));
+                playerMap.values().stream().filter(p -> p.getMode().equals("SPECTATOR")).forEach(p -> p.sendMessage("You are spectating"));
+
                 gameThread.start();
 
             } else {
