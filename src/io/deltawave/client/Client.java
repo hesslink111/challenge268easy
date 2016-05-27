@@ -53,7 +53,9 @@ public class Client {
 
         //Wait for broadcast
         System.out.println("Waiting for server broadcast...");
-        DatagramSocket dsocket = new DatagramSocket(2000, InetAddress.getByName("0.0.0.0"));
+        DatagramSocket dsocket = new DatagramSocket(null);
+        dsocket.setReuseAddress(true);
+        dsocket.bind(new InetSocketAddress(2000));
         byte[] bytes = new byte[1024];
         DatagramPacket dpacket = new DatagramPacket(bytes, 1024);
         dsocket.receive(dpacket);
@@ -68,6 +70,7 @@ public class Client {
             System.out.println("Game: " + game);
             System.out.println("Players: " + players);
         }
+        dsocket.close();
     }
 
     public void connectToServer() throws IOException {

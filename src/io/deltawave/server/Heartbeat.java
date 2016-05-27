@@ -24,9 +24,7 @@ public class Heartbeat implements MessageListener {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                notReceivedHeartbeatReply.stream()
-                        .forEach(c -> System.out.println(c.getIdentity() + " disconnected: No heartbeat"));
-                cList.removeClients(notReceivedHeartbeatReply);
+                cList.removeClients(notReceivedHeartbeatReply, "No heartbeat reply");
             }
         }, 2000);
 

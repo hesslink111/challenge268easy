@@ -1,5 +1,6 @@
 package io.deltawave.server;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -57,15 +58,17 @@ public class ClientsList implements MessageListener {
         sendToAll(client.getUsername() + " has joined.");
     }
 
-    public void removeClient(ConnectedClient client) {
-        client.disconnect();
+    public void removeClient(ConnectedClient client, String message) {
         connectedClients.remove(client);
-        connectionChangeListeners.stream().forEach(ccl -> ccl.onDisconnect(client));
-        sendToAll(client.getUsername() + " has disconnected.");
+        if(client.isConnected()) {
+            client.disconnect(message);
+            connectionChangeListeners.stream().forEach(ccl -> ccl.onDisconnect(client));
+            sendToAll(client.getUsername() + " has disconnected.");
+        }
     }
 
-    public void removeClients(List<ConnectedClient> clientList) {
-        clientList.stream().forEach(this::removeClient);
+    public void removeClients(List<ConnectedClient> clientList, String message) {
+        clientList.stream().forEach(c -> removeClient(c, message));
     }
 
     public void addConnectionChangeListener(ConnectionChangeListener ccl) {

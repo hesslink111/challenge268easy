@@ -46,10 +46,10 @@ public class ConnectedClient extends Thread {
                     receivedMessage(line);
                 }
             } catch (NullPointerException e) {
-                System.out.println("Could not read from client, disconnecting");
+                ClientsList.getInstance().removeClient(this, "Could not read from client");
                 connected = false;
             } catch (IOException e) {
-                System.out.println("Could not read from client, disconnecting");
+                ClientsList.getInstance().removeClient(this, "Could not read from client");
                 connected = false;
             }
         }
@@ -71,7 +71,7 @@ public class ConnectedClient extends Thread {
             String messageBody = message.substring(messageType.length(), message.length()).trim();
             //give to listeners
             (new ArrayList<>(messageListeners)).stream()
-                    .forEach(ml -> ml.onMessageReceived(this, messageType, messageBody));
+                    .forEach(ml -> ml.onMessageReceived(this, messageType.toUpperCase(), messageBody));
         }
     }
 
@@ -83,12 +83,14 @@ public class ConnectedClient extends Thread {
         messageListeners.remove(ml);
     }
 
-    public void disconnect() {
+    public void disconnect(String message) {
         try {
             socket.close();
-        } catch (IOException e) {
-            System.out.println("Error closing client connection");
-            e.printStackTrace();
+            System.out.println("Disconnecting client: " + message);
+        } catch(IOException ex) {
+            System.out.println("Had some error");
+            //Fail silently
+            //Probably already closed
         }
     }
 
@@ -98,5 +100,9 @@ public class ConnectedClient extends Thread {
 
     public String getUsername() {
         return username;
+    }
+
+    public boolean isConnected() {
+        return socket.isConnected() && !socket.isClosed();
     }
 }

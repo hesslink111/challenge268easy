@@ -2,7 +2,6 @@ package io.deltawave;
 
 import io.deltawave.cardgame.blackjack.GameManager;
 import io.deltawave.server.BroadcastThread;
-import io.deltawave.server.ClientsList;
 import io.deltawave.server.Heartbeat;
 import io.deltawave.server.ConnectionAccepter;
 import java.util.Timer;
