@@ -2,11 +2,12 @@ package io.deltawave.server;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by will on 5/24/16.
  */
-public class ClientsList {
+public class ClientsList implements MessageListener {
 
     private static ClientsList cList = null;
 
@@ -18,8 +19,15 @@ public class ClientsList {
     }
 
     private ArrayList<ConnectedClient> connectedClients;
-
     private ArrayList<ConnectionChangeListener> connectionChangeListeners;
+
+    private static String[] names = { "Carrot", "Donut", "Fitzgerald", "Hedgehog", "Chronic",
+            "Pelican", "Bookworm", "Magic-Hat", "Godzilla", "Pikachu", "Fuzzy", "Napkin",
+            "Slushpuppy", "Johnson", "Rocky", "Edgar", "Rodriguez", "Monty", "Sampson",
+            "Teller", "Yogi", "Onion", "Mudflap", "Hammer", "Bud", "Wallaber", "Acron",
+            "Dominic", "Sierra", "Amherst", "Flapjack", "Thompson", "Mace", "Carpenter",
+            "Laurence", "Mickey", "Bjorn", "Friendly", "Penny", "Barry", "Mulligan",
+            "Ivan", "Reginald", "Applesauce", "Bean", "Whitehouse", "Oppenheimer" };
 
     private ClientsList() {
         connectedClients = new ArrayList<>();
@@ -31,8 +39,21 @@ public class ClientsList {
     }
 
     public void addClient(ConnectedClient client) {
+        //Set their name
+        while(client.getUsername() == null) {
+            String randName = getRandomName();
+            if(isNameFree(randName)) {
+                client.setUsername(randName);
+            }
+        }
+
+        //Add to list of clients
         connectedClients.add(client);
+        client.addMessageListener(this);
         connectionChangeListeners.stream().forEach(ccl -> ccl.onConnect(client));
+
+        client.send("You are " + client.getUsername());
+        sendToAll(client.getUsername() + " has joined.");
     }
 
     public void removeClient(ConnectedClient client) {
@@ -56,5 +77,32 @@ public class ClientsList {
     public void sendToAll(String message) {
         connectedClients.forEach(c -> c.send(message));
         System.out.println("To all: " + message);
+    }
+
+    @Override
+    public void onMessageReceived(ConnectedClient client, String messageType, String messageBody) {
+
+        //Check if they are trying to change their name
+        if(messageType.equals("USERNAME")) {
+            //Set username
+            if(isNameFree(messageBody)) {
+                String oldName = client.getUsername();
+                client.setUsername(messageBody);
+                client.send("You are " + messageBody);
+                sendToAll(oldName + " is now known as " + messageBody);
+            } else {
+                client.send("Name already taken");
+            }
+        }
+    }
+
+    private boolean isNameFree(String name) {
+        return name.length() > 0 && connectedClients.stream().noneMatch(c -> c.getUsername().equals(name));
+    }
+
+    private String getRandomName() {
+        Random random = new Random();
+        int index = random.nextInt(ClientsList.names.length);
+        return ClientsList.names[index];
     }
 }

@@ -1,7 +1,5 @@
 package io.deltawave.cardgame.blackjack;
 
-import io.deltawave.cardgame.Card;
-import io.deltawave.cardgame.Deck;
 import io.deltawave.server.ClientsList;
 import io.deltawave.server.ConnectedClient;
 import io.deltawave.server.ConnectionChangeListener;
@@ -9,9 +7,6 @@ import io.deltawave.server.MessageListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Created by will on 5/25/16.

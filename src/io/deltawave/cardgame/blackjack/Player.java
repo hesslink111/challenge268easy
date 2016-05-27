@@ -2,10 +2,8 @@ package io.deltawave.cardgame.blackjack;
 
 import io.deltawave.cardgame.Card;
 import io.deltawave.server.ConnectedClient;
-import io.deltawave.server.MessageListener;
 
 import java.util.ArrayList;
-import java.util.Random;
 
 /**
  * Created by will on 5/25/16.
@@ -14,29 +12,15 @@ public class Player {
 
     private ConnectedClient client;
     private ArrayList<Card> hand;
-    private String name;
-
-    private static String[] names = { "Carrot", "Donut", "Fitzgerald", "Hedgehog", "Chronic",
-            "Pelican", "Bookworm", "Magic-Hat", "Godzilla", "Pikachu", "Fuzzy", "Napkin",
-            "Slushpuppy", "Johnson", "Rocky", "Edgar", "Rodriguez", "Monty", "Sampson",
-            "Teller", "Yogi", "Onion", "Mudflap", "Hammer", "Bud" };
 
     public Player(ConnectedClient client) {
         this.client = client;
+
         hand = new ArrayList<>();
-
-        chooseRandomName();
-        client.send("You are " + name);
-    }
-
-    private void chooseRandomName() {
-        Random random = new Random();
-        int index = random.nextInt(Player.names.length);
-        name = Player.names[index];
     }
 
     public String getName() {
-        return name;
+        return client.getName();
     }
 
     public void giveCard(Card c) {

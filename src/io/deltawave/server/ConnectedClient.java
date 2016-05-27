@@ -20,6 +20,8 @@ public class ConnectedClient extends Thread {
 
     private ArrayList<MessageListener> messageListeners;
 
+    private String username;
+
     public ConnectedClient(Socket socket) throws IOException {
         this.socket = socket;
         out = new PrintWriter(socket.getOutputStream(), true);
@@ -27,6 +29,7 @@ public class ConnectedClient extends Thread {
 
         messageListeners = new ArrayList<>();
 
+        this.username = null;
     }
 
     public String getIdentity() {
@@ -87,5 +90,13 @@ public class ConnectedClient extends Thread {
             System.out.println("Error closing client connection");
             e.printStackTrace();
         }
+    }
+
+    public void setUsername(String name) {
+        this.username = name;
+    }
+
+    public String getUsername() {
+        return username;
     }
 }

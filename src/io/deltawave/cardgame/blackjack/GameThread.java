@@ -3,7 +3,6 @@ package io.deltawave.cardgame.blackjack;
 import io.deltawave.cardgame.Card;
 import io.deltawave.cardgame.Deck;
 import io.deltawave.server.ClientsList;
-import io.deltawave.server.ConnectedClient;
 
 import java.util.ArrayList;
 import java.util.Collection;
